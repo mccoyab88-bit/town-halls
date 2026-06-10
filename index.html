@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NYC Congressional Public-Event Tracker</title>
+<style>
+:root{color-scheme:light;
+ --bg:#f7f8fa;--card:#fff;--ink:#15181d;--mut:#5b6470;--line:#e3e7ee;
+ --blue:#2563c9;--red:#cf3b3b;--green:#2f9e57;--amber:#c9881f;--purple:#7a4ad1;--slate:#64748b;
+ --shadow:0 1px 3px rgba(20,30,50,.07),0 1px 2px rgba(20,30,50,.04);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:940px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:21px;margin:0 0 2px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 14px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 13px;box-shadow:var(--shadow)}
+.stat b{font-size:20px;display:block;line-height:1.1}
+.stat span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+.note{background:#eef3fb;border:1px solid #d4e0f4;border-radius:10px;padding:10px 13px;font-size:13px;color:#2a3a52;margin:0 0 16px}
+.tabs{display:flex;gap:6px;border-bottom:2px solid var(--line);margin:0 0 16px;flex-wrap:wrap}
+.tab{background:none;border:0;padding:8px 12px;font:inherit;font-weight:600;color:var(--mut);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab.on{color:var(--ink);border-bottom-color:var(--blue)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:0 0 12px;box-shadow:var(--shadow)}
+.evt{border-left:4px solid var(--slate)}
+.evt[data-play=pressure]{border-left-color:var(--red)}
+.evt[data-play=support]{border-left-color:var(--green)}
+.evt[data-play=demand-signal]{border-left-color:var(--blue)}
+.evt[data-play=leadership]{border-left-color:var(--purple)}
+.evt[data-play=probe]{border-left-color:var(--amber)}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.who{font-weight:700}
+.dist{color:var(--mut);font-weight:500}
+.badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bdg{font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.02em}
+.bdg.th{background:#e7f3ec;color:#1d7a44}
+.bdg.app{background:#eef0f4;color:#475569}
+.bdg.play{color:#fff}
+.play-pressure{background:var(--red)}.play-support{background:var(--green)}.play-demand-signal{background:var(--blue)}.play-leadership{background:var(--purple)}.play-probe{background:var(--amber)}
+.when{font-weight:600;margin:8px 0 2px}
+.loc{color:var(--mut);font-size:13px}
+.flag{display:inline-block;background:#fdf2e2;color:#9a6a12;border:1px solid #f0dcb6;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;margin-left:6px}
+.flag.changed{background:#fde8e8;color:#a32626;border-color:#f3c4c4}
+.whip{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0;align-items:center}
+.whip .lab{font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-right:2px}
+.axis{font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid transparent}
+.axis .ax{opacity:.6;margin-right:4px}
+.p-strong-support,.p-support{background:#e4f4ea;color:#1d7a44}
+.p-lean-support{background:#eef6e9;color:#4d7a1d}
+.p-neutral{background:#eef1f5;color:#516074}
+.p-unknown{background:#f1f2f4;color:#7a828e}
+.p-lean-oppose{background:#fbeede;color:#9a5a12}
+.p-strong-oppose,.p-oppose{background:#fbe5e5;color:#a32626}
+.btn{font:inherit;font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:7px;padding:4px 9px;cursor:pointer;color:var(--ink)}
+.btn:hover{background:#f0f3f8}
+.btn.src{text-decoration:none;display:inline-block;margin-top:8px}
+.cap{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.cap summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--mut)}
+.cap .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cap label{font-size:11px;font-weight:700;color:var(--mut);display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.02em}
+.cap input,.cap textarea{width:100%;font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#fff}
+.cap textarea{min-height:46px;resize:vertical}
+.cap .full{grid-column:1/3}
+.saved{font-size:11px;color:var(--green);font-weight:700;margin-left:8px}
+.grp{margin:18px 0 8px;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);display:flex;align-items:center;gap:8px}
+.grp .dot{width:10px;height:10px;border-radius:50%}
+.mcard{border-left:4px solid var(--slate)}
+.mcard[data-play=pressure]{border-left-color:var(--red)}.mcard[data-play=support]{border-left-color:var(--green)}.mcard[data-play=demand-signal]{border-left-color:var(--blue)}.mcard[data-play=leadership]{border-left-color:var(--purple)}.mcard[data-play=probe]{border-left-color:var(--amber)}
+.party{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.party.D{background:var(--blue)}.party.R{background:var(--red)}
+.links a{font-size:12px;color:var(--blue);text-decoration:none;margin-right:12px}
+.links a:hover{text-decoration:underline}
+.about p{margin:0 0 11px}.about h3{margin:18px 0 6px;font-size:15px}
+.about ul{margin:0 0 11px;padding-left:20px}.about li{margin:3px 0}
+.muted{color:var(--mut);font-size:12px}
+.hide{display:none}
+.evcount{font-size:11px;font-weight:700;color:var(--blue);background:#eaf1fc;border-radius:20px;padding:1px 8px;margin-left:6px}
+</style></head>
+<body><div class="wrap">
+<h1>NYC Congressional Public-Event Tracker</h1>
+<p class="sub" id="sub"></p>
+<div class="stats" id="stats"></div>
+<div class="note" id="note"></div>
+<div class="tabs">
+ <button class="tab on" data-t="events">Upcoming events</button>
+ <button class="tab" data-t="roster">Roster &amp; Whip List (15)</button>
+ <button class="tab" data-t="about">How it works &amp; sources</button>
+</div>
+<main>
+ <section id="events"></section>
+ <section id="roster" class="hide"></section>
+ <section id="about" class="hide about"></section>
+</main>
+</div>
+<script>
+const DATA = {"generated": "2026-06-10T13:48:53.387764+00:00", "roster": [{"id": "schumer", "name": "Chuck Schumer", "chamber": "Senate", "state": "NY", "district": null, "party": "D", "role": "Senate Minority Leader", "play": "leadership", "whip_list": {"dc": "lean-support", "pe": "unknown", "ai": "lean-support", "note": "AI lean-support (documented xRisk awareness); DC lean-support. Heavily cross-pressured — treat single signals as noise."}, "official_site": "https://www.schumer.senate.gov", "events_page": "https://www.schumer.senate.gov/newsroom/press-releases", "press_page": "https://www.schumer.senate.gov/newsroom/press-releases", "newsletter_signup": "https://www.schumer.senate.gov/contact/email", "local_outlets": ["NY Times", "City & State NY", "Spectrum News NY1", "Gothamist", "amNY"]}, {"id": "gillibrand", "name": "Kirsten Gillibrand", "chamber": "Senate", "state": "NY", "district": null, "party": "D", "role": "Senator", "play": "probe", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "lean-support", "note": "AI lean-support (military-AI framework: 'commanders not AI in control'; commonsense guardrails)."}, "official_site": "https://www.gillibrand.senate.gov", "events_page": "https://www.gillibrand.senate.gov/newsroom/press-releases", "press_page": "https://www.gillibrand.senate.gov/newsroom/press-releases", "newsletter_signup": "https://www.gillibrand.senate.gov/contact/email", "local_outlets": ["NY Times", "City & State NY", "Spectrum News NY1", "Gothamist", "amNY"]}, {"id": "suozzi", "name": "Tom Suozzi", "chamber": "House", "state": "NY", "district": "NY-03", "party": "D", "role": "Representative", "play": "pressure", "whip_list": {"dc": "lean-oppose", "pe": "unknown", "ai": "unknown", "note": "DC lean-oppose (pro-data-center op-ed; permitting modernization)."}, "official_site": "https://suozzi.house.gov", "events_page": "https://suozzi.house.gov/about/events", "press_page": "https://suozzi.house.gov/media/press-releases", "newsletter_signup": "https://suozzi.house.gov/contact/newsletter-signup", "local_outlets": ["Long Island Press", "Newsday", "LI Herald", "Patch (Nassau)"]}, {"id": "gillen", "name": "Laura Gillen", "chamber": "House", "state": "NY", "district": "NY-04", "party": "D", "role": "Representative", "play": "demand-signal", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "lean-support", "note": "AI lean-support (five AI cosponsorships). Holds in-person town halls (Hofstra series)."}, "official_site": "https://gillen.house.gov", "events_page": "https://gillen.house.gov/about/events", "press_page": "https://gillen.house.gov/media/press-releases", "newsletter_signup": "https://gillen.house.gov/contact/newsletter-signup", "local_outlets": ["Long Island Press", "Newsday", "LI Herald", "Patch (Hempstead/Garden City)"]}, {"id": "meeks", "name": "Gregory Meeks", "chamber": "House", "state": "NY", "district": "NY-05", "party": "D", "role": "Rep.; Ranking Member, House Foreign Affairs", "play": "pressure", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "lean-oppose", "note": "AI lean-oppose (pure China-AI-race framing as HFAC Ranking Member)."}, "official_site": "https://meeks.house.gov", "events_page": "https://meeks.house.gov/about/events", "press_page": "https://meeks.house.gov/media/press-releases", "newsletter_signup": "https://meeks.house.gov/contact/newsletter-signup", "local_outlets": ["QNS / Queens Daily Eagle", "Queens Chronicle", "amNY"]}, {"id": "meng", "name": "Grace Meng", "chamber": "House", "state": "NY", "district": "NY-06", "party": "D", "role": "Representative", "play": "probe", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "unknown", "note": "No whip-list signal yet."}, "official_site": "https://meng.house.gov", "events_page": "https://meng.house.gov/about/events", "press_page": "https://meng.house.gov/media/press-releases", "newsletter_signup": "https://meng.house.gov/contact/newsletter-signup", "local_outlets": ["Queens Chronicle", "QNS", "amNY"]}, {"id": "jeffries", "name": "Hakeem Jeffries", "chamber": "House", "state": "NY", "district": "NY-08", "party": "D", "role": "House Democratic (Minority) Leader", "play": "leadership", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "unknown", "note": "No personal signal; appoints Dem members to House AI bodies."}, "official_site": "https://jeffries.house.gov", "events_page": "https://jeffries.house.gov/about/events", "press_page": "https://jeffries.house.gov/media/press-releases", "newsletter_signup": "https://jeffries.house.gov/contact/newsletter-signup", "local_outlets": ["Brooklyn Eagle", "Brooklyn Paper", "amNY"]}, {"id": "clarke", "name": "Yvette Clarke", "chamber": "House", "state": "NY", "district": "NY-09", "party": "D", "role": "Rep.; Congressional Black Caucus", "play": "pressure", "whip_list": {"dc": "lean-oppose", "pe": "strong-support", "ai": "strong-support", "note": "AI strong-support (Algorithmic Accountability + AI Civil Rights Act lead); PE strong-support (led 43-member anti-preemption letter); DC lean-oppose (opposed Sanders moratorium). LTF/Think Big backing = yellow flag."}, "official_site": "https://clarke.house.gov", "events_page": "https://clarke.house.gov/about/events", "press_page": "https://clarke.house.gov/media/press-releases", "newsletter_signup": "https://clarke.house.gov/contact/newsletter-signup", "local_outlets": ["Brooklyn Eagle", "Brooklyn Paper", "Kings County Politics", "amNY"]}, {"id": "goldman", "name": "Dan Goldman", "chamber": "House", "state": "NY", "district": "NY-10", "party": "D", "role": "Representative", "play": "probe", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "lean-support", "note": "AI lean-support (tweet-aggregation; no A4-adjacent lead). Primary challenge from Brad Lander."}, "official_site": "https://goldman.house.gov", "events_page": "https://goldman.house.gov/about/events", "press_page": "https://goldman.house.gov/media/press-releases", "newsletter_signup": "https://goldman.house.gov/contact/newsletter-signup", "local_outlets": ["Brooklyn Eagle", "The Village Sun", "Gothamist", "amNY"]}, {"id": "malliotakis", "name": "Nicole Malliotakis", "chamber": "House", "state": "NY", "district": "NY-11", "party": "R", "role": "Representative (Staten Island / S. Brooklyn)", "play": "probe", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "unknown", "note": "No whip-list signal. Runs a monthly telephone town hall; no in-person town hall (GOP avoid-in-person posture)."}, "official_site": "https://malliotakis.house.gov", "events_page": "https://malliotakis.house.gov/about/events", "press_page": "https://malliotakis.house.gov/media/press-releases", "newsletter_signup": "https://malliotakis.house.gov/contact/newsletter-signup", "local_outlets": ["SILive / Staten Island Advance", "Brooklyn Paper"]}, {"id": "nadler", "name": "Jerry Nadler", "chamber": "House", "state": "NY", "district": "NY-12", "party": "D", "role": "Representative (RETIRING end of 119th)", "play": "demand-signal", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "unknown", "note": "No signal; retiring. NY-12 open-seat primary 6/23/26."}, "official_site": "https://nadler.house.gov", "events_page": "https://nadler.house.gov/about/events", "press_page": "https://nadler.house.gov/media/press-releases", "newsletter_signup": "https://nadler.house.gov/contact/newsletter-signup", "local_outlets": ["amNY", "Gothamist", "The Village Sun", "City & State NY"]}, {"id": "espaillat", "name": "Adriano Espaillat", "chamber": "House", "state": "NY", "district": "NY-13", "party": "D", "role": "Representative", "play": "support", "whip_list": {"dc": "neutral", "pe": "unknown", "ai": "lean-support", "note": "AI lean-support (lead AI Literacy bill + cosponsorships); DC neutral. Recurring 'Coffee With Your Congressman' + community events."}, "official_site": "https://espaillat.house.gov", "events_page": "https://espaillat.house.gov/about/events", "press_page": "https://espaillat.house.gov/media/press-releases", "newsletter_signup": "https://espaillat.house.gov/contact/newsletter-signup", "local_outlets": ["Mundo al Dia", "Manhattan Times", "Norwood News", "Bronx Times"]}, {"id": "ocasio-cortez", "name": "Alexandria Ocasio-Cortez", "chamber": "House", "state": "NY", "district": "NY-14", "party": "D", "role": "Representative", "play": "support", "whip_list": {"dc": "strong-support", "pe": "lean-support", "ai": "strong-support", "note": "AI strong-support (DEFIANCE Act lead); DC strong-support (S.4214 moratorium House lead); PE lean-support (anti-preemption). Holds regular in-person town halls."}, "official_site": "https://ocasio-cortez.house.gov", "events_page": "https://ocasio-cortez.house.gov/about/events", "press_page": "https://ocasio-cortez.house.gov/media/press-releases", "newsletter_signup": "https://ocasio-cortez.house.gov/contact/newsletter-signup", "local_outlets": ["Bronx Times", "QNS", "Norwood News", "amNY"]}, {"id": "torres", "name": "Ritchie Torres", "chamber": "House", "state": "NY", "district": "NY-15", "party": "D", "role": "Representative (Bronx)", "play": "pressure", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "strong-oppose", "note": "AI strong-oppose (LTF/Think Big backing; no A4-adjacent work). Most industry-aligned Democrat in this roster."}, "official_site": "https://ritchietorres.house.gov", "events_page": "https://ritchietorres.house.gov/about/events", "press_page": "https://ritchietorres.house.gov/media/press-releases", "newsletter_signup": "https://ritchietorres.house.gov/contact/newsletter-signup", "local_outlets": ["Bronx Times", "Norwood News", "Mott Haven Herald"]}, {"id": "latimer", "name": "George Latimer", "chamber": "House", "state": "NY", "district": "NY-16", "party": "D", "role": "Representative (Westchester / parts of Bronx)", "play": "probe", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "unknown", "note": "No whip-list signal yet."}, "official_site": "https://latimer.house.gov", "events_page": "https://latimer.house.gov/about/events", "press_page": "https://latimer.house.gov/media/press-releases", "newsletter_signup": "https://latimer.house.gov/contact/newsletter-signup", "local_outlets": ["lohud / Journal News", "Westchester County Press", "Bronx Times"]}], "play_types": {"pressure": "Captured / industry-aligned. Bird-dog to create visible consequences + earned media.", "probe": "Position unknown. Showing up surfaces where they stand and signals demand.", "demand-signal": "Movable but not leading. Turnout demonstrates a base; gives cover to prioritize.", "support": "Ally. Supportive turnout that gives cover to champion.", "leadership": "Holds party/committee leverage beyond their own vote."}, "events": [{"source": "news", "member_id": "espaillat", "title": "Puerto Rico Community Breakfast (CHC Chair Espaillat; honoring retiring Rep. Velazquez)", "start": "2026-06-13T08:00:00-04:00", "end": "2026-06-13T10:00:00-04:00", "location": {"venue": "El Museo del Barrio", "address": "1230 5th Ave", "city": "New York", "state": "NY", "congressional_district": "13"}, "source_url": "https://stayhappening.com/e/chc-chair-adriano-espaillat-puerto-rico-community-breakfast-E118SAYW6IEIA", "category": "public_appearance", "relevance": "medium", "date_confidence": "high", "summary": "Cultural breakfast hosted by Espaillat (CHC Chair), theme Cultura, Comunidad, y Poder, honoring retiring Rep. Nydia Velazquez. Public appearance, ceremonial rather than Q&A. Date verified against stayhappening listing (Sat Jun 13 2026, 8-10AM). RSVP; space may be limited.", "uid": "news:espaillat:2026-06-13", "status": "scheduled", "first_seen": "2026-06-09T15:14:24.595770+00:00", "capture": {}, "needs_reverify": true, "last_seen": "2026-06-10T13:48:53.385736+00:00", "member": {"name": "Adriano Espaillat", "district": "NY-13", "party": "D", "play": "support", "whip_list": {"dc": "neutral", "pe": "unknown", "ai": "lean-support", "note": "AI lean-support (lead AI Literacy bill + cosponsorships); DC neutral. Recurring 'Coffee With Your Congressman' + community events."}}}, {"source": "news", "member_id": "malliotakis", "title": "Malliotakis Monday - recurring constituent action across from district office", "start": "2026-06-15T17:30:00-04:00", "location": {"venue": "Across from Rep. Malliotakis district office", "address": "1698 Victory Blvd (Castleton Corners)", "city": "Staten Island", "state": "NY", "congressional_district": "11"}, "source_url": "https://www.silive.com/news/2026/06/staten-islanders-gather-at-malliotakis-office-to-oppose-health-care-cuts-ice-spending.html", "category": "public_appearance", "relevance": "high", "date_confidence": "inferred", "recurrence": "weekly Monday", "summary": "Recurring weekly protest (Health Care for America Now + Metro NY Health Care for All). Existing constituent-pressure infrastructure to plug into. Next-Monday date inferred from 6/2/26 silive report - confirm exact date/time. She has held NO in-person town hall; runs a monthly telephone town hall.", "uid": "news:malliotakis:2026-06-15", "status": "scheduled", "first_seen": "2026-06-09T15:14:24.694768+00:00", "capture": {}, "needs_reverify": true, "last_seen": "2026-06-10T13:48:53.385747+00:00", "member": {"name": "Nicole Malliotakis", "district": "NY-11", "party": "R", "play": "probe", "whip_list": {"dc": "unknown", "pe": "unknown", "ai": "unknown", "note": "No whip-list signal. Runs a monthly telephone town hall; no in-person town hall (GOP avoid-in-person posture)."}}}], "counts": {"upcoming_total": 2, "member_matched": 2, "next_14_days": 2}, "public": true, "_meta_play_types": {"pressure": "Captured / industry-aligned. Bird-dog to create visible consequences + earned media.", "probe": "Position unknown. Showing up surfaces where they stand and signals demand.", "demand-signal": "Movable but not leading. Turnout demonstrates a base; gives cover to prioritize.", "support": "Ally. Supportive turnout that gives cover to champion.", "leadership": "Holds party/committee leverage beyond their own vote."}};
+const PUBLIC = DATA.public===true;
+const $=(s,r=document)=>r.querySelector(s); const ce=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+const PLAY_DOT={pressure:'var(--red)',support:'var(--green)','demand-signal':'var(--blue)',leadership:'var(--purple)',probe:'var(--amber)'};
+const PLAY_LABEL={pressure:'Pressure / bird-dog',support:'Ally',['demand-signal']:'Demand signal',leadership:'Leadership',probe:'Probe'};
+const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function fmtDate(iso){if(!iso)return 'date TBD';const d=new Date(iso);return d.toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
+function axisPill(ax,val){val=val||'unknown';return `<span class="axis p-${esc(val)}"><span class="ax">${esc(ax)}</span>${esc(val)}</span>`;}
+function whipRow(wl){if(!wl)return '';return `<div class="whip"><span class="lab">Whip List</span>${axisPill('DC',wl.dc)}${axisPill('PE',wl.pe)}${axisPill('AI',wl.ai)}</div>`;}
+function distKey(m){return m.chamber==='Senate'?0:parseInt((m.district||'NY-99').split('-')[1],10);}
+
+function confFlag(e){
+ if(e.date_changed_from) return '<span class="flag changed">date changed &mdash; verify</span>';
+ if(e.date_confidence==='inferred') return '<span class="flag">date inferred &mdash; confirm</span>';
+ if(e.date_confidence==='medium') return '<span class="flag">verify date</span>';
+ return '';
+}
+
+function captureBlock(e){
+ const k='cap:'+e.uid; let s={}; try{s=JSON.parse(localStorage.getItem(k)||'{}')}catch(_){}
+ return `<details class="cap"><summary>Log turnout &amp; outcome (the structure test)</summary>
+ <div class="grid">
+   <div><label>People turned out</label><input data-k="turnout" value="${esc(s.turnout||'')}" placeholder="#"></div>
+   <div><label>Lead organizer(s)</label><input data-k="organizer" value="${esc(s.organizer||'')}" placeholder="who pulled them in"></div>
+   <div class="full"><label>What the member said</label><textarea data-k="said">${esc(s.said||'')}</textarea></div>
+   <div class="full"><label>Notes / follow-up</label><textarea data-k="notes">${esc(s.notes||'')}</textarea></div>
+ </div>
+ <div style="margin-top:8px"><button class="btn" data-save="${esc(e.uid)}">Save</button><span class="saved hide">saved</span></div>
+ </details>`;
+}
+
+function renderEvents(){
+ const root=$('#events'); root.innerHTML='';
+ if(!DATA.events.length){root.innerHTML='<div class="card"><b>No confirmed upcoming events yet.</b><p class="muted">Checked automatically each day from members\' newsletters, .gov events pages, and local-press coverage.</p></div>';return;}
+ DATA.events.forEach(e=>{
+  const m=e.member||{}; const card=ce('div','card evt'); if(!PUBLIC)card.dataset.play=m.play||'';
+  card.innerHTML=`<div class="row">
+    <div><span class="who">${esc(m.name||e.member_name||'Unmatched')}</span> <span class="dist">${esc(m.district||'')} ${m.party?'&middot; '+esc(m.party):''}</span></div>
+    <div class="badges">
+      <span class="bdg ${e.category==='town_hall'?'th':'app'}">${e.category==='town_hall'?'town hall':'public appearance'}</span>
+      ${(!PUBLIC&&m.play)?`<span class="bdg play play-${esc(m.play)}">${esc(PLAY_LABEL[m.play]||m.play)}</span>`:''}
+    </div></div>
+   <div class="when">${esc(e.title)}</div>
+   <div class="loc">${fmtDate(e.start)}${confFlag(e)} &nbsp;&middot;&nbsp; ${esc((e.location&&(e.location.venue||e.location.city))||'')} ${e.location&&e.location.address?'&middot; '+esc(e.location.address):''}${e.recurrence?' &middot; <b>recurring '+esc(e.recurrence)+'</b>':''}</div>
+   ${e.summary?`<div class="muted" style="margin-top:6px">${esc(e.summary)}</div>`:''}
+   ${whipRow(m.whip_list)}
+   ${e.source_url?`<a class="btn src" href="${esc(e.source_url)}" target="_blank" rel="noopener">Source &amp; details &#8599;</a>`:''}
+   ${PUBLIC?'':captureBlock(e)}`;
+  root.appendChild(card);
+ });
+}
+
+function memberCard(m,evByMember){
+ const c=ce('div','card mcard'); if(!PUBLIC)c.dataset.play=m.play;
+ const n=(evByMember[m.id]||[]).length; const wl=m.whip_list||{};
+ c.innerHTML=`<div class="row">
+   <div><span class="party ${esc(m.party)}"></span><span class="who">${esc(m.name)}</span> <span class="dist">${esc(m.district||m.chamber)} &middot; ${esc(m.role||'')}</span>${n?`<span class="evcount">${n} upcoming</span>`:''}</div>
+ </div>
+ ${whipRow(wl)}
+ ${(!PUBLIC&&wl.note)?`<div class="muted" style="margin-top:6px">${esc(wl.note)}</div>`:''}
+ <div class="links" style="margin-top:8px"><a href="${esc(m.official_site)}" target="_blank" rel="noopener">Official site &#8599;</a><a href="${esc(m.events_page||m.official_site)}" target="_blank" rel="noopener">Events page &#8599;</a>${PUBLIC?'':`<a href="${esc(m.newsletter_signup||m.official_site)}" target="_blank" rel="noopener">Newsletter &#8599;</a>`}</div>`;
+ return c;
+}
+
+function renderRoster(){
+ const root=$('#roster'); root.innerHTML='';
+ const evByMember={}; DATA.events.forEach(e=>{if(e.member_id){(evByMember[e.member_id]=evByMember[e.member_id]||[]).push(e)}});
+ if(PUBLIC){
+  const ms=[...DATA.roster].sort((a,b)=>distKey(a)-distKey(b));
+  ms.forEach(m=>root.appendChild(memberCard(m,evByMember)));
+  return;
+ }
+ const order=['leadership','pressure','support','demand-signal','probe'];
+ order.forEach(play=>{
+  const members=DATA.roster.filter(m=>m.play===play); if(!members.length)return;
+  const pt=(DATA._meta_play_types&&DATA._meta_play_types[play])||'';
+  const g=ce('div','grp'); g.innerHTML=`<span class="dot" style="background:${PLAY_DOT[play]}"></span>${esc(PLAY_LABEL[play])} &mdash; <span style="font-weight:600;text-transform:none;letter-spacing:0">${esc(pt)}</span>`;
+  root.appendChild(g);
+  members.forEach(m=>root.appendChild(memberCard(m,evByMember)));
+ });
+}
+
+function renderAbout(){
+ if(PUBLIC){
+  $('#about').innerHTML=`
+  <h3>What this is</h3>
+  <p>Upcoming public events for the 15 members of Congress representing New York City and its suburbs (both U.S. Senators and NY-03 through NY-16), so constituents can show up and engage them. Each member also shows their current stance on three issues we track: <b>DC</b> (data centers), <b>PE</b> (federal preemption of state AI laws), <b>AI</b> (AI accountability). Support = pro-accountability / pro-state-authority / pro-safety.</p>
+  <h3>Where events come from</h3>
+  <ul><li>Members' email newsletters</li><li>Each member's official .gov events &amp; press pages</li><li>Daily local-press &amp; community-group coverage</li></ul>
+  <p class="muted">Dates are verified against the source and re-checked close to the event. NY's congressional map is in litigation for the Nov 2026 election; incumbents/districts here are current.</p>`;
+  return;
+ }
+ $('#about').innerHTML=`
+ <h3>What this tracks</h3>
+ <p>The 15 incumbents covering NYC and its suburbs &mdash; both Senators and 13 House members (NY-03 through NY-16) &mdash; and the public events where constituents can engage them. Each member shows their current <b>Whip List</b> status: <b>DC</b> (data centers), <b>PE</b> (preemption), <b>AI</b>. Support = HF-aligned.</p>
+ <h3>Where event data comes from</h3>
+ <ul>
+  <li><b>Members' email newsletters</b> (Congress-Events Gmail label) &mdash; where town halls are announced first, often on short notice.</li>
+  <li><b>Each member's .gov events &amp; press pages</b> &mdash; swept and date-verified each run.</li>
+  <li><b>Daily local-press &amp; civic-group search</b> (Exa) &mdash; Patch, SILive, Brooklyn Eagle, LI Press, Bronx Times, neighborhood associations.</li>
+  <li><b>Mobilize API</b> &mdash; thin supplement. Town Hall Project (old aggregator) is defunct.</li>
+ </ul>
+ <h3>The "play" for each member</h3>
+ <ul id="playlist"></ul>
+ <p class="muted"><b>Date verification:</b> every event's date is checked against its source and re-checked within 14 days. NY's map is in Nov-2026 litigation; incumbents/districts here are current.</p>`;
+ const pl=$('#playlist'); const pts=DATA._meta_play_types||{};
+ Object.keys(pts).forEach(k=>{const li=ce('li');li.innerHTML=`<b>${esc(PLAY_LABEL[k]||k)}:</b> ${esc(pts[k])}`;pl.appendChild(li);});
+}
+
+function renderNote(){
+ $('#note').innerHTML = PUBLIC
+   ? 'Upcoming public events for NYC-area members of Congress, with each member\'s current stance on data centers (DC), federal preemption (PE), and AI accountability (AI). Support = pro-accountability.'
+   : '<b>A structure test, not just an alert feed.</b> Showing up is mobilizing; the power comes from the loop. Log who turned out and who organized them. Each member shows their current <b>Whip List</b> status: <b>DC</b> (data centers), <b>PE</b> (preemption), <b>AI</b>. Support = HF-aligned.';
+}
+
+function renderStats(){
+ const c=DATA.counts||{};
+ $('#stats').innerHTML=`
+  <div class="stat"><b>${c.upcoming_total||0}</b><span>upcoming events</span></div>
+  <div class="stat"><b>${c.next_14_days||0}</b><span>next 14 days</span></div>
+  <div class="stat"><b>${(DATA.roster||[]).length}</b><span>members tracked</span></div>`;
+ const d=DATA.generated?new Date(DATA.generated):null;
+ $('#sub').innerHTML=`Last updated ${d?d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'&mdash;'} &middot; ${PUBLIC?'shared by Humans First / Left Coalition':'refreshes when the monitor runs &middot; Humans First / Left Coalition'}`;
+}
+
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+ ['events','roster','about'].forEach(id=>$('#'+id).classList.toggle('hide',id!==b.dataset.t));
+ try{localStorage.setItem('tab',b.dataset.t)}catch(_){}
+});
+document.addEventListener('click',ev=>{
+ const b=ev.target.closest('[data-save]'); if(!b)return;
+ const det=b.closest('details'); const obj={};
+ det.querySelectorAll('[data-k]').forEach(i=>obj[i.dataset.k]=i.value);
+ try{localStorage.setItem('cap:'+b.dataset.save,JSON.stringify(obj));const s=b.nextElementSibling;s.classList.remove('hide');setTimeout(()=>s.classList.add('hide'),1500)}catch(_){}
+});
+renderNote();renderStats();renderEvents();renderRoster();renderAbout();
+try{const t=localStorage.getItem('tab');if(t)document.querySelector(`.tab[data-t="${t}"]`)?.click()}catch(_){}
+</script></body></html>
